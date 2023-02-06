@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload file</title>
+  </head>
+  <body>
+    <form action="/login?username=niubi" method="post">
+      用户名:<input type="text" name="username" /> 密码:<input type="password" name="password" />
+      <input type="submit" value="登录" />
+    </form>
+  </body>
+</html>
