@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
+	"go_test/middleware"
 	"go_test/session"
 	_ "go_test/session/memory"
 	"io"
@@ -24,21 +25,53 @@ func init() {
 }
 
 func main() {
-	http.HandleFunc("/ping", ping)
-	http.HandleFunc("/login", login)
-	http.HandleFunc("/upload", upload)
-	http.HandleFunc("/count", count)
+	// 默认 ServeMux DefaultServeMux
+	// http.HandleFunc("/ping", ping)
+	// http.HandleFunc("/login", login)
+	// http.HandleFunc("/upload", upload)
+	// http.HandleFunc("/count", count)
 
-	time.AfterFunc(time.Second*10, func() {
-		targetUrl := "http://localhost:9090/upload"
-		filename := "./upload.gtpl"
-		postFile(filename, targetUrl)
-	})
+	// // // test middleware
+	// // http.Handle("/middleware1", PanicRecover(WithLogger(Metirc(http.HandlerFunc(middleware1)))))
 
-	err := http.ListenAndServe(":9090", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err.Error())
+	// time.AfterFunc(time.Second*10, func() {
+	// 	targetUrl := "http://localhost:9090/upload"
+	// 	filename := "./upload.gtpl"
+	// 	postFile(filename, targetUrl)
+	// })
+
+	// err := http.ListenAndServe(":9090", nil)
+	// if err != nil {
+	// 	log.Fatal("ListenAndServe: ", err.Error())
+	// }
+
+	// 自定义 ServeMux
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ping", ping)
+
+	// test Middleware
+	mux.Handle("/middleware", middleware.PanicRecover(middleware.WithLogger(middleware.Metirc(http.HandlerFunc(testMidware)))))
+
+	middlewares := []middleware.MiddleWare{
+		middleware.PanicRecover,
+		middleware.WithLogger,
+		middleware.Metirc,
 	}
+
+	mux.Handle("/middleware", middleware.ApplyMiddlewares(http.HandlerFunc(testMidware), middlewares...))
+
+	srv := http.Server{
+		Addr:         ":9090",
+		Handler:      mux,
+		ReadTimeout:  time.Second * 30,
+		WriteTimeout: time.Second * 30,
+	}
+
+	srv.ListenAndServe()
+}
+
+func testMidware(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, r.URL.Path)
 }
 
 func count(w http.ResponseWriter, r *http.Request) {
